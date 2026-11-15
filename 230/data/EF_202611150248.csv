@@ -1,0 +1,10 @@
+"EF_id","category","EF_Value","GWP","unit_id","source_EF"
+ef_01,น้ำประปา,0.516700000000000050000,,3,https://thaicarbonlabel.tgo.or.th/index.php?lang=TH&mod=Y0hKdlpIVmpkSE5mWlcxcGMzTnBiMjQ9
+ef_02,น้ำมันดีเซล,2.698722000000000100000,,6,https://thaicarbonlabel.tgo.or.th/index.php?lang=TH&mod=YjNKbllXNXBlbUYwYVc5dVgyVnRhWE56YVc5dQ
+ef_03,น้ำมันเบนซิน,2.181563999999999800000,,6,https://thaicarbonlabel.tgo.or.th/index.php?lang=TH&mod=YjNKbllXNXBlbUYwYVc5dVgyVnRhWE56YVc5dQ
+ef_04,ปุ๋ย N,3.303599999999999900000,,4,"http://www.ijat-aatsea.com/pdf/v20_n2_2024_March/27_IJAT_20(2)_2024_Tokhun,%20N.--1044.pdf"
+ef_05,ปุ๋ย P,1.571600000000000100000,,4,"http://www.ijat-aatsea.com/pdf/v20_n2_2024_March/27_IJAT_20(2)_2024_Tokhun,%20N.--1044.pdf"
+ef_06,ปุ๋ย K,0.497400000000000010000,,4,"http://www.ijat-aatsea.com/pdf/v20_n2_2024_March/27_IJAT_20(2)_2024_Tokhun,%20N.--1044.pdf"
+ef_07,ก๊าซ CH4,0.002700000000000000100,29.8,4,https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_02_Ch2_Generic.pdf
+ef_08,ก๊าซ N2O,0.000069999999999999994,273.0,4,https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_02_Ch2_Generic.pdf
+ef_09,ผลรวมของการเผาพืช,0.099570000000000006000,,4,https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_02_Ch2_Generic.pdf

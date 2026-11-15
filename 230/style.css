@@ -1,0 +1,41 @@
+body { 
+  font-family: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif; 
+}
+
+.furrows {
+  background-color: #1b4332;
+  background-image: repeating-linear-gradient(
+    172deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 14px);
+}
+
+mark { 
+  background: #d8f3dc; 
+  color: #1b4332; 
+  border-radius: 2px; 
+  padding: 0 1px; 
+}
+
+.tbl-wrap { 
+  max-height: 70vh; 
+}
+
+th.sortable { 
+  cursor: pointer; 
+  user-select: none; 
+}
+
+th.sortable:hover { 
+  background: #d8e8dc; 
+}
+
+:focus-visible { 
+  outline: 2px solid #40916c; 
+  outline-offset: 2px; 
+}
+
+@media (prefers-reduced-motion: reduce) { 
+  * { 
+    transition: none !important; 
+    animation: none !important; 
+  } 
+}

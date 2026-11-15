@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My sob SQL</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          forest: '#1b4332',
+          leaf: '#2d6a4f',
+          fern: '#40916c',
+          sage: '#b7d3bf',
+          mist: '#eef5ef'
+        },
+        fontFamily: {
+          display: ['"Bricolage Grotesque"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          body: ['"Source Sans 3"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        }
+      }
+    }
+  };
+</script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-mist text-stone-800 min-h-screen">
+
+<header class="furrows text-white">
+  <div class="max-w-7xl mx-auto px-4 py-8 sm:py-10">
+    <h1 class="font-display text-3xl sm:text-4xl font-bold tracking-tight">MysobSQL</h1>
+    <p id="subtitle" class="mt-2 text-sage max-w-2xl">Loading datasets from the data folder…</p>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+
+  <div id="progressBox" class="bg-white rounded-lg border border-sage p-4">
+    <div class="flex justify-between text-sm text-leaf mb-2">
+      <span id="progressLabel">Looking for CSV files…</span>
+      <span id="progressCount"></span>
+    </div>
+    <div class="h-2 bg-mist rounded-full overflow-hidden">
+      <div id="progressBar" class="h-full bg-fern transition-all" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="errorBox" class="hidden bg-white border-l-4 border-red-600 rounded-lg p-4 text-sm" role="alert"></div>
+
+  <div id="app" class="hidden space-y-5">
+
+    <section class="bg-white rounded-lg border border-sage p-4 space-y-4">
+      <div class="grid gap-3 md:grid-cols-12">
+        <div class="md:col-span-5">
+          <label for="datasetSelect" class="block text-sm font-semibold text-forest mb-1">Dataset</label>
+          <select id="datasetSelect" class="w-full rounded-md border border-sage bg-white px-3 py-2"></select>
+        </div>
+        <div class="md:col-span-5">
+          <label for="searchInput" class="block text-sm font-semibold text-forest mb-1">Search</label>
+          <input id="searchInput" type="search" autocomplete="off"
+                 placeholder="Crop, year, country, value… (separate words to match all)"
+                 class="w-full rounded-md border border-sage px-3 py-2">
+        </div>
+        <div class="md:col-span-2">
+          <label for="pageSize" class="block text-sm font-semibold text-forest mb-1">Rows per page</label>
+          <select id="pageSize" class="w-full rounded-md border border-sage bg-white px-3 py-2">
+            <option>25</option><option>50</option><option>100</option><option>250</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="filterPanel">
+        <div class="text-sm font-semibold text-forest mb-1">Column filters</div>
+        <div class="grid gap-2 sm:grid-cols-12">
+          <select id="fCol" aria-label="Column" class="sm:col-span-4 rounded-md border border-sage bg-white px-3 py-2"></select>
+          <select id="fOp" aria-label="Condition" class="sm:col-span-3 rounded-md border border-sage bg-white px-3 py-2">
+            <option value="contains">contains</option>
+            <option value="equals">equals</option>
+            <option value="gte">is at least (≥)</option>
+            <option value="lte">is at most (≤)</option>
+          </select>
+          <input id="fVal" list="fValList" aria-label="Value" placeholder="Value"
+                 class="sm:col-span-3 rounded-md border border-sage px-3 py-2">
+          <datalist id="fValList"></datalist>
+          <button id="fAdd" class="sm:col-span-2 rounded-md bg-leaf hover:bg-forest text-white font-semibold px-3 py-2 transition-colors">Add filter</button>
+        </div>
+        <div id="chips" class="flex flex-wrap gap-2 mt-3"></div>
+        <p id="filterHint" class="hidden text-sm text-stone-500 mt-2">Column filters work on a single dataset. Pick one from the Dataset list, or click a result count below to open it.</p>
+      </div>
+    </section>
+
+    <section id="cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></section>
+
+    <section id="overview" class="hidden">
+      <h2 class="font-display text-xl font-semibold text-forest mb-3">Datasets</h2>
+      <div id="overviewGrid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
+    <section id="matchCounts" class="hidden">
+      <h2 class="font-display text-lg font-semibold text-forest mb-2">Matches by dataset</h2>
+      <div id="matchChips" class="flex flex-wrap gap-2"></div>
+    </section>
+
+    <section id="results" class="hidden bg-white rounded-lg border border-sage overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-sage">
+        <h2 id="resultsTitle" class="font-display text-lg font-semibold text-forest"></h2>
+        <button id="clearAll" class="text-sm text-leaf hover:text-forest underline underline-offset-2">Clear search and filters</button>
+      </div>
+      <div id="emptyMsg" class="hidden p-8 text-center text-stone-600"></div>
+      <div id="tableWrap" class="tbl-wrap overflow-auto">
+        <table class="min-w-full text-sm">
+          <thead id="thead" class="bg-mist text-forest sticky top-0 z-10"></thead>
+          <tbody id="tbody" class="divide-y divide-mist"></tbody>
+        </table>
+      </div>
+      <div id="pager" class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-sage text-sm"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="max-w-7xl mx-auto px-4 pb-8 text-xs text-stone-500">
+  All figures shown come directly from the CSV files in the data folder.
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+"unit_id","unit_name","unit_symbol","unit_category"
+1,ตัน,ton,mass
+2,ไร่,rai,area
+3,ลูกบาศก์เมตร,m3,volume
+4,กิโลกรัม,kg,mass
+5,กิโลวัตต์-ชั่วโมง,kWh,energy
+6,ลิตร,L,volume
+7,กิโลกรัมต่อไร่,kg/rai,mass
+8,ลูกบาศก์เมตรต่อไร่,m3/rai,volume
+9,เปอร์เซ็นต์,%,ratio
+10,ลิตรต่อชั่วโมง,L/hr,volume

@@ -1,0 +1,9 @@
+"fertilizer_id","fertilizer_type","fertilizer_formula","N","P","K","EF_total","source_fertilize"
+NPK_01,เคมี,"16-20-0",16,20.0,0,0.842895999999999980,http://www1.ldd.go.th/WEB_PSD/pdf/expert%20work/ex18-2/1.pdf
+NPK_02,เคมี,"46-0-0",46,0.0,0,1.519655999999999900,http://www1.ldd.go.th/WEB_PSD/pdf/expert%20work/ex18-2/1.pdf
+NPK_03,เคมี,"0-0-60",0,0.0,60,0.298439999999999980,http://www1.ldd.go.th/WEB_PSD/pdf/expert%20work/ex18-2/1.pdf
+NPK_10,เคมี,"15-15-15",15,15.0,15,0.805890000000000000,http://osl101.ldd.go.th/soilgr_man/south/crop/oilpalm.htm
+NPK_12,เคมี,"0-46-0",0,46.0,0,0.722936000000000020,http://www1.ldd.go.th/WEB_PSD/pdf/expert%20work/ex18-2/1.pdf
+NPK_13,เคมี,"13-13-21",13,13.0,21,0.738230000000000050,http://www1.ldd.go.th/WEB_PSD/pdf/expert%20work/ex18-2/1.pdf
+NPK_16,เคมี,"21-0-0",21,0.0,0,0.693756000000000040,http://osl101.ldd.go.th/soilgr_man/south/crop/p_apple.htm
+หมัก_01,อินทรีย์,มูลสัตว์,2,0.5,1,0.078904000000000002,http://www1.ldd.go.th/WEB_PSD/PDF/expert%20work/3.pdf
