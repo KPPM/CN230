@@ -3,51 +3,254 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>แดชบอร์ดคาร์บอนฟุตพริ้นท์เกษตร</title>
+  <title>Agri-Carbon Intelligence Platform · Pitching Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-    :root { --ink:#12332b; --forest:#065f46; --leaf:#0f8a62; --mint:#eaf7f1; --line:#cde6da; --slate:#52645f; --white:#fff; --amber:#f59e0b; --coral:#ef6c57; }
-    * { box-sizing:border-box; } body { margin:0; background:linear-gradient(135deg,#f3fbf7 0%,#e7f5ef 48%,#f8fcfa 100%); color:var(--ink); font-family:Prompt,system-ui,sans-serif; }
-    button,select { font:inherit; } .shell { max-width:1240px; margin:auto; padding:28px 20px 54px; }
-    .hero { position:relative; overflow:hidden; padding:30px; border-radius:24px; color:#fff; background:linear-gradient(118deg,#064e3b,#087052 58%,#0b8d67); box-shadow:0 20px 50px rgba(6,95,70,.22); }
-    .hero:after { content:""; position:absolute; width:300px; height:300px; border:45px solid rgba(255,255,255,.08); border-radius:50%; right:-100px; top:-145px; }
-    .eyebrow { margin:0 0 6px; color:#b8ebd5; font-size:.78rem; font-weight:600; letter-spacing:.13em; text-transform:uppercase; } h1 { margin:0; max-width:760px; font-size:clamp(1.7rem,4vw,3rem); line-height:1.22; } .hero p { margin:10px 0 0; max-width:730px; color:#d9f6e9; }
-    .selector { position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:24px; padding:15px 18px; border:1px solid rgba(255,255,255,.2); border-radius:16px; background:rgba(255,255,255,.12); backdrop-filter:blur(12px); } .selector label { font-size:.9rem; font-weight:600; } select { min-width:min(100%,320px); border:0; border-radius:10px; padding:10px 12px; color:var(--ink); background:white; outline-offset:3px; }
-    .grid { display:grid; gap:16px; margin-top:20px; } .kpis { grid-template-columns:repeat(3,1fr); } .card { border:1px solid rgba(205,230,218,.9); border-radius:18px; background:rgba(255,255,255,.82); box-shadow:0 10px 28px rgba(13,69,51,.07); backdrop-filter:blur(10px); }
-    .kpi { padding:20px; } .kpi-label { color:var(--slate); font-size:.85rem; } .kpi-value { margin-top:7px; color:var(--forest); font-size:clamp(1.5rem,3vw,2.15rem); font-weight:700; line-height:1.1; } .kpi-unit { margin-top:5px; color:#668078; font-size:.78rem; }
-    .section { margin-top:22px; padding:22px; } h2 { margin:0; font-size:1.2rem; } .lead { margin:5px 0 0; color:var(--slate); font-size:.9rem; }
-    .flow { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:center; margin-top:20px; } .flow-node { position:relative; min-height:184px; border:1px solid var(--line); border-radius:16px; padding:17px; text-align:left; color:var(--ink); background:#fff; cursor:pointer; transition:transform .2s, box-shadow .2s, border-color .2s; } .flow-node:hover,.flow-node[aria-pressed="true"] { transform:translateY(-4px); border-color:var(--leaf); box-shadow:0 14px 25px rgba(15,138,98,.14); } .flow-node:not(:last-child):after { content:"➜"; position:absolute; z-index:2; right:-24px; top:50%; color:var(--leaf); font-size:1.55rem; transform:translateY(-50%); } .flow-icon { display:grid; width:42px; height:42px; place-items:center; border-radius:12px; background:var(--mint); font-size:1.35rem; } .flow-node:nth-child(2) .flow-icon { background:#eaf3fb; } .flow-node:nth-child(3) .flow-icon { background:#fff2e8; } .flow-node:last-child { border-color:var(--forest); color:white; background:linear-gradient(145deg,var(--forest),#087052); } .flow-node:last-child .flow-icon { background:rgba(255,255,255,.16); } .flow-label { margin-top:14px; font-weight:600; } .flow-value { margin-top:8px; font-size:1.45rem; font-weight:700; } .flow-unit { font-size:.75rem; opacity:.75; } .flow-detail { min-height:47px; margin:16px 0 0; padding:13px 15px; border-radius:11px; background:var(--mint); color:#245546; font-size:.87rem; }
-    .analytics { grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr); } .chart-wrap { min-height:280px; padding:14px 0 0; } .legend { display:grid; gap:10px; margin-top:20px; } .legend-row { display:flex; justify-content:space-between; gap:10px; color:var(--slate); font-size:.88rem; } .legend-key { display:flex; align-items:center; gap:8px; } .dot { width:10px; height:10px; border-radius:50%; } .method { margin:16px 0 0; padding-top:14px; border-top:1px solid var(--line); color:var(--slate); font-size:.78rem; line-height:1.6; }
-    .table-toggle { margin-top:20px; border:0; border-radius:10px; padding:10px 14px; color:#fff; background:var(--forest); cursor:pointer; } .table-wrap { display:none; margin-top:16px; max-height:360px; overflow:auto; border:1px solid var(--line); border-radius:12px; } .table-wrap.show { display:block; } table { width:100%; border-collapse:collapse; background:#fff; font-size:.84rem; } th,td { padding:11px 13px; border-bottom:1px solid #e8f3ee; text-align:left; } th { position:sticky; top:0; color:#245546; background:#eaf7f1; } td:last-child,th:last-child { text-align:right; font-variant-numeric:tabular-nums; } .status { margin-top:22px; color:var(--slate); font-size:.88rem; text-align:center; } .error { color:#b42318; } .fallback { margin:14px auto 0; max-width:680px; padding:14px; border:1px solid #f3c5bd; border-radius:12px; color:#7a271a; background:#fff4f1; font-size:.86rem; text-align:left; } .fallback label { display:inline-block; margin-top:9px; font-weight:600; cursor:pointer; } .fallback input { display:block; margin-top:7px; }
-    @media (max-width:850px) { .kpis,.analytics,.flow { grid-template-columns:1fr 1fr; } .flow-node:nth-child(2):after { display:none; } .flow-node:nth-child(3):after { display:block; } }
-    @media (max-width:560px) { .shell { padding:16px 13px 35px; } .hero { padding:22px; border-radius:18px; } .kpis,.analytics,.flow { grid-template-columns:1fr; } .flow-node { min-height:145px; } .flow-node:not(:last-child):after { content:"↓"; right:50%; top:auto; bottom:-28px; transform:translateX(50%); } .flow { gap:34px; } .section { padding:17px; } }
+    :root { 
+      --ink: #0f172a; 
+      --forest: #047857; 
+      --leaf: #10b981; 
+      --mint: #ecfdf5; 
+      --line: #e2e8f0; 
+      --slate: #64748b; 
+      --white: #ffffff; 
+      --amber: #f59e0b; 
+      --coral: #ef4444; 
+      --card-bg: rgba(255, 255, 255, 0.85);
+    }
+    * { box-sizing: border-box; } 
+    body { 
+      margin: 0; 
+      background: radial-gradient(circle at top right, #f0fdf4 0%, #e6f4ea 50%, #f1f5f9 100%); 
+      color: var(--ink); 
+      font-family: 'Prompt', system-ui, sans-serif; 
+      min-height: 100vh;
+    }
+    button, select { font: inherit; } 
+    .shell { max-width: 1280px; margin: auto; padding: 32px 20px 60px; }
+    
+    /* Hero Section */
+    .hero { 
+      position: relative; 
+      overflow: hidden; 
+      padding: 36px 40px; 
+      border-radius: 24px; 
+      color: #fff; 
+      background: linear-gradient(135deg, #022c22, #064e3b 60%, #047857); 
+      box-shadow: 0 20px 40px rgba(4, 120, 87, 0.25); 
+    }
+    .hero:after { 
+      content: ""; 
+      position: absolute; 
+      width: 340px; 
+      height: 340px; 
+      border: 50px solid rgba(255, 255, 255, 0.05); 
+      border-radius: 50%; 
+      right: -80px; 
+      top: -120px; 
+    }
+    .eyebrow { 
+      margin: 0 0 8px; 
+      color: #6ee7b7; 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      letter-spacing: 0.15em; 
+      text-transform: uppercase; 
+    } 
+    h1 { margin: 0; max-width: 780px; font-size: clamp(1.8rem, 3.5vw, 2.8rem); line-height: 1.2; } 
+    .hero p { margin: 12px 0 0; max-width: 720px; color: #a7f3d0; font-size: 1.05rem; }
+    
+    /* Selector */
+    .selector { 
+      position: relative; 
+      display: flex; 
+      align-items: center; 
+      flex-wrap: wrap; 
+      gap: 16px; 
+      margin-top: 28px; 
+      padding: 16px 20px; 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+      border-radius: 16px; 
+      background: rgba(255, 255, 255, 0.1); 
+      backdrop-filter: blur(12px); 
+    } 
+    .selector label { font-size: 0.95rem; font-weight: 600; color: #f8fafc; } 
+    select { 
+      min-width: min(100%, 340px); 
+      border: 0; 
+      border-radius: 10px; 
+      padding: 12px 16px; 
+      color: var(--ink); 
+      background: white; 
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      outline: none; 
+      cursor: pointer;
+    }
+
+    /* Grid & Cards */
+    .grid { display: grid; gap: 20px; margin-top: 24px; } 
+    .kpis { grid-template-columns: repeat(3, 1fr); } 
+    .card { 
+      border: 1px solid rgba(226, 232, 240, 0.8); 
+      border-radius: 20px; 
+      background: var(--card-bg); 
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05); 
+      backdrop-filter: blur(10px); 
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08); }
+    
+    .kpi { padding: 24px; } 
+    .kpi-label { color: var(--slate); font-size: 0.9rem; font-weight: 500; } 
+    .kpi-value { margin-top: 8px; color: var(--forest); font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 700; line-height: 1.1; } 
+    .kpi-unit { margin-top: 6px; color: var(--slate); font-size: 0.82rem; }
+
+    .section { margin-top: 24px; padding: 28px; } 
+    h2 { margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--ink); } 
+    .lead { margin: 6px 0 0; color: var(--slate); font-size: 0.95rem; }
+
+    /* Flow / Workflow Steps */
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: center; margin-top: 24px; } 
+    .flow-node { 
+      position: relative; 
+      min-height: 200px; 
+      border: 1px solid var(--line); 
+      border-radius: 16px; 
+      padding: 20px; 
+      text-align: left; 
+      color: var(--ink); 
+      background: #fff; 
+      cursor: pointer; 
+      transition: all 0.25s ease; 
+    } 
+    .flow-node:hover, .flow-node[aria-pressed="true"] { 
+      transform: translateY(-6px); 
+      border-color: var(--leaf); 
+      box-shadow: 0 16px 30px rgba(16, 185, 129, 0.15); 
+    } 
+    .flow-node:not(:last-child):after { 
+      content: "➔"; 
+      position: absolute; 
+      z-index: 2; 
+      right: -26px; 
+      top: 50%; 
+      color: var(--leaf); 
+      font-size: 1.4rem; 
+      transform: translateY(-50%); 
+      font-weight: bold;
+    } 
+    .flow-icon { 
+      display: grid; 
+      width: 48px; 
+      height: 48px; 
+      place-items: center; 
+      border-radius: 14px; 
+      background: var(--mint); 
+      font-size: 1.5rem; 
+    } 
+    .flow-node:nth-child(2) .flow-icon { background: #e0f2fe; color: #0284c7; } 
+    .flow-node:nth-child(3) .flow-icon { background: #ffedd5; color: #ea580c; } 
+    .flow-node:last-child { 
+      border-color: var(--forest); 
+      color: white; 
+      background: linear-gradient(145deg, #065f46, #047857); 
+    } 
+    .flow-node:last-child .flow-icon { background: rgba(255, 255, 255, 0.2); } 
+    .flow-label { margin-top: 14px; font-weight: 600; font-size: 0.95rem; } 
+    .flow-value { margin-top: 8px; font-size: 1.5rem; font-weight: 700; } 
+    .flow-unit { font-size: 0.78rem; opacity: 0.8; } 
+    
+    .flow-detail { 
+      min-height: 52px; 
+      margin: 20px 0 0; 
+      padding: 14px 18px; 
+      border-radius: 12px; 
+      background: var(--mint); 
+      color: #065f46; 
+      font-size: 0.9rem; 
+      border-left: 4px solid var(--leaf);
+    }
+
+    /* Analytics Section */
+    .analytics { grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr); } 
+    .chart-wrap { min-height: 300px; padding: 10px 0; display: flex; justify-content: center; align-items: center; } 
+    .legend { display: grid; gap: 12px; margin-top: 20px; } 
+    .legend-row { display: flex; justify-content: space-between; gap: 10px; color: var(--slate); font-size: 0.92rem; padding-bottom: 8px; border-bottom: 1px dashed var(--line); } 
+    .legend-key { display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--ink); } 
+    .dot { width: 12px; height: 12px; border-radius: 50%; } 
+    .method { margin: 20px 0 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--slate); font-size: 0.82rem; line-height: 1.6; }
+
+    /* Table & Controls */
+    .table-toggle { 
+      margin-top: 20px; 
+      border: 0; 
+      border-radius: 12px; 
+      padding: 12px 20px; 
+      color: #fff; 
+      background: var(--forest); 
+      cursor: pointer; 
+      font-weight: 600;
+      transition: background 0.2s;
+    } 
+    .table-toggle:hover { background: #047857; }
+    .table-wrap { display: none; margin-top: 16px; max-height: 380px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; } 
+    .table-wrap.show { display: block; } 
+    table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.88rem; } 
+    th, td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; text-align: left; } 
+    th { position: sticky; top: 0; color: #065f46; background: var(--mint); font-weight: 600; } 
+    td:last-child, th:last-child { text-align: right; font-variant-numeric: tabular-nums; } 
+    
+    .status { margin-top: 24px; color: var(--slate); font-size: 0.9rem; text-align: center; font-weight: 500; } 
+    .error { color: var(--coral); } 
+    .fallback { margin: 16px auto 0; max-width: 700px; padding: 16px; border: 1px solid #fecaca; border-radius: 14px; color: #991b1b; background: #fef2f2; font-size: 0.9rem; text-align: left; } 
+    .fallback label { display: inline-block; margin-top: 10px; font-weight: 600; cursor: pointer; color: #0284c7; } 
+    .fallback input { display: block; margin-top: 8px; }
+
+    @media (max-width: 900px) { 
+      .kpis, .analytics, .flow { grid-template-columns: 1fr; } 
+      .flow-node:not(:last-child):after { content: "↓"; right: 50%; top: auto; bottom: -28px; transform: translateX(50%); } 
+      .flow { gap: 36px; } 
+    }
   </style>
 </head>
 <body>
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow">LCI Intelligence · Cradle-to-Gate</p>
-      <h1 id="page-title">แดชบอร์ดคาร์บอนฟุตพริ้นท์พืชเศรษฐกิจ</h1>
-      <p>ภาพรวมแหล่งกำเนิดคาร์บอนตลอดกระบวนการเพาะปลูก เพื่อสื่อสารข้อมูล LCI ให้เข้าใจง่ายและตัดสินใจได้เร็วขึ้น</p>
+      <p class="eyebrow">Agri-Carbon Intelligence · Pitching Ready</p>
+      <h1 id="page-title">แดชบอร์ดคาร์บอนฟุตพริ้นท์พืชเศรษฐกิจไทย</h1>
+      <p>ระบบวิเคราะห์และจำลองการปล่อยก๊าซเรือนกระจกตลอดวัฏจักรชีวิต (Cradle-to-Gate) เพื่อการตัดสินใจและขับเคลื่อนเกษตรกรรมยั่งยืน</p>
       <div class="selector">
-        <label for="cropSelect">เลือกพืชเศรษฐกิจ</label>
+        <label for="cropSelect">เลือกพืชเศรษฐกิจ:</label>
         <select id="cropSelect" aria-label="เลือกพืชเศรษฐกิจ"></select>
       </div>
     </section>
 
     <section class="grid kpis" aria-label="ตัวชี้วัดสำคัญ">
-      <article class="card kpi"><div class="kpi-label">คาร์บอนฟุตพริ้นท์รวม</div><div class="kpi-value" id="totalKpi">0.00</div><div class="kpi-unit">kg CO2e / ตันผลผลิต</div></article>
-      <article class="card kpi"><div class="kpi-label">แหล่งปล่อยสูงสุด</div><div class="kpi-value" id="highestKpi">—</div><div class="kpi-unit" id="highestDetail">รอข้อมูล</div></article>
-      <article class="card kpi"><div class="kpi-label">ขอบเขตการประเมิน</div><div class="kpi-value">Cradle-to-Gate</div><div class="kpi-unit">ตั้งแต่ปัจจัยนำเข้าจนถึงผลผลิตหน้าแปลง</div></article>
+      <article class="card kpi">
+        <div class="kpi-label">คาร์บอนฟุตพริ้นท์รวมสุทธิ</div>
+        <div class="kpi-value" id="totalKpi">0.00</div>
+        <div class="kpi-unit">kg CO₂e / ตันผลผลิต</div>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-label">แหล่งปล่อยคาร์บอนสูงสุด</div>
+        <div class="kpi-value" id="highestKpi">—</div>
+        <div class="kpi-unit" id="highestDetail">กำลังประมวลผลข้อมูล</div>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-label">ขอบเขตการประเมิน (LCI)</div>
+        <div class="kpi-value" style="font-size: 1.8rem; margin-top: 4px;">Cradle-to-Gate</div>
+        <div class="kpi-unit">ครอบคลุมตั้งแต่ปัจจัยการผลิตถึงหน้าแปลง</div>
+      </article>
     </section>
 
     <section class="card section" aria-labelledby="flow-title">
-      <h2 id="flow-title">เส้นทางการปล่อยคาร์บอนต่อ 1 ตันผลผลิต</h2>
-      <p class="lead">คลิกการ์ดแต่ละขั้นตอนเพื่ออ่านคำอธิบายและที่มาของข้อมูล</p>
+      <h2 id="flow-title">🌱 แผนผังจำลองการปล่อยคาร์บอน (Emission Workflow)</h2>
+      <p class="lead">คลิกที่การ์ดแต่ละขั้นตอนเพื่อดูรายละเอียดผลกระทบต่อ 1 ตันผลผลิต</p>
       <div id="flow" class="flow" aria-label="แผนภาพลำดับกระบวนการปล่อยคาร์บอน"></div>
       <p id="flowDetail" class="flow-detail" aria-live="polite"></p>
     </section>
@@ -55,26 +258,41 @@
     <section class="grid analytics">
       <article class="card section" aria-labelledby="chart-title">
         <h2 id="chart-title">สัดส่วนแหล่งกำเนิดคาร์บอน</h2>
-        <p class="lead">เปรียบเทียบปุ๋ย เครื่องจักร และการจัดการซากพืช</p>
-        <div class="chart-wrap"><canvas id="breakdownChart" aria-label="กราฟโดนัทสัดส่วนการปล่อยคาร์บอน" role="img"></canvas></div>
+        <p class="lead">เปรียบเทียบสัดส่วนระหว่างปุ๋ย เครื่องจักร และการจัดการซากพืช</p>
+        <div class="chart-wrap">
+          <canvas id="breakdownChart" aria-label="กราฟโดนัทสัดส่วนการปล่อยคาร์บอน" role="img"></canvas>
+        </div>
       </article>
       <article class="card section" aria-labelledby="summary-title">
-        <h2 id="summary-title">สรุปสำหรับการนำเสนอ</h2>
+        <h2 id="summary-title">สรุปข้อมูลเชิงลึกสำหรับ Pitching</h2>
         <div id="legend" class="legend"></div>
-        <p class="method">วิธีคำนวณ: ปุ๋ยใช้ค่าการปล่อยรวมจากตารางปุ๋ยและพื้นที่เพาะปลูก, เครื่องจักรใช้ค่า kg CO2e/ชม. ที่มีในชุดข้อมูล, และการเผาซากพืชใช้ค่า emission ที่บันทึกไว้ จากนั้นหารด้วยผลผลิตรวมของพืชที่เลือก ข้อมูลที่เป็น 0 แสดงเป็น 0.00</p>
+        <p class="method"><strong>ระเบียบวิธีคำนวณ:</strong> นำข้อมูลการปล่อยก๊าซจากกิจกรรมการใช้ปุ๋ย เครื่องจักร และการจัดการซากพืชอ้างอิงจากชุดข้อมูล <code>Dataset รวม.csv</code> นำมารวมและหารด้วยผลผลิตรวมของพืชแต่ละชนิด (ค่าที่แสดงผลเป็นมาตรฐาน kg CO₂e ต่อ 1 ตันผลผลิต)</p>
       </article>
     </section>
 
     <section class="card section" aria-labelledby="table-title">
-      <h2 id="table-title">รายละเอียดรายการข้อมูลของพืชที่เลือก</h2>
-      <p class="lead">ตารางย่อจาก Dataset รวม.csv เพื่อความโปร่งใสในการตรวจสอบ</p>
+      <h2 id="table-title">ตารางตรวจสอบชุดข้อมูลดิบ (Data Transparency)</h2>
+      <p class="lead">ข้อมูลรายละเอียดรายรายการที่ดึงมาจาก Dataset เพื่อความโปร่งใสและความน่าเชื่อถือในการนำเสนอ</p>
       <button id="toggleTable" class="table-toggle" type="button" aria-expanded="false" aria-controls="tableWrap">แสดงตารางข้อมูล</button>
-      <div id="tableWrap" class="table-wrap"><table><thead><tr><th>แหล่งปล่อย</th><th>รายการ</th><th>กิจกรรม</th><th>การปล่อย (kg CO2e)</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+      <div id="tableWrap" class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>แหล่งปล่อย</th>
+              <th>รายการ</th>
+              <th>กิจกรรม / เชื้อเพลิง</th>
+              <th>การปล่อย (kg CO₂e)</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </section>
-    <p id="status" class="status" aria-live="polite">กำลังอ่าน Dataset รวม.csv…</p>
+
+    <p id="status" class="status" aria-live="polite">กำลังเชื่อมต่อฐานข้อมูล Dataset รวม.csv…</p>
     <div id="dataFallback" class="fallback" role="alert" hidden>
-      เบราว์เซอร์ไม่อนุญาตให้อ่านไฟล์ข้อมูลโดยตรง หากเปิดด้วย <code>file://</code> กรุณาเปิดผ่าน Live Server หรือเลือกไฟล์ <strong>Dataset รวม.csv</strong> จากเครื่อง
-      <label for="csvUpload">เลือกไฟล์ CSV<input id="csvUpload" type="file" accept=".csv,text/csv"></label>
+      เบราว์เซอร์จำกัดการเข้าถึงไฟล์โดยตรงผ่าน <code>file://</code> กรุณารันผ่าน Local Server หรือเลือกไฟล์ <strong>Dataset รวม.csv</strong> ด้วยตนเอง:
+      <label for="csvUpload">อัปโหลดไฟล์ Dataset รวม.csv<input id="csvUpload" type="file" accept=".csv,text/csv"></label>
     </div>
   </main>
 
@@ -86,88 +304,230 @@
       const $ = id => document.getElementById(id);
       const number = value => { const parsed = Number(String(value ?? '').replace(/,/g, '').trim()); return Number.isFinite(parsed) ? parsed : 0; };
       const show = value => number(value).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nthIndex = (headers, name, occurrence) => headers.reduce((found, header, index) => header === name && found.length < occurrence + 1 ? found.concat(index) : found, [])[occurrence];
+      
       let records = null, chart = null;
 
       function columnMap(headers) {
+        const find = (names) => headers.findIndex(h => names.some(n => h.toLowerCase().includes(n.toLowerCase())));
         return {
-          residueCropId: nthIndex(headers, 'cultivation_id', 0), productionCropId: nthIndex(headers, 'cultivation_id', 1), machineryCropId: nthIndex(headers, 'cultivation_id', 2), fertilizerCropId: nthIndex(headers, 'cultivation_id', 4), cropId: nthIndex(headers, 'cultivation_id', 6),
-          cropName: headers.indexOf('crop_name'), cropType: headers.indexOf('crop_type'), residueType: headers.indexOf('residue_type'), residueEmission: headers.indexOf('source_carbon_kgCO2e'), machineryType: headers.indexOf('TYPE_MACHINERY'), machineryFuel: headers.indexOf('oil_type_from_image'), machineryEmission: headers.indexOf('carbon_per_hour_kgCO2e'), fertilizerId: headers.indexOf('fertilizer_id'), fertilizerAmount: headers.indexOf('fertilizer_amount'), fertilizerEmission: headers.indexOf('kgCO₂e'), production: headers.indexOf('total_production')
+          cropId: find(['cultivation_id']),
+          cropName: find(['crop_name']),
+          cropType: find(['crop_type']),
+          fertilizerAmount: find(['fertilizer_amount']),
+          fertilizerEmission: find(['kgco₂e', 'carbon']),
+          machineryEmission: find(['carbon_per_hour', 'machinery_carbon']),
+          residueEmission: find(['source_carbon', 'residue_carbon']),
+          production: find(['total_production', 'production'])
         };
       }
-      function rowsFor(index, cropId) { return records.rows.filter(row => String(row[index] ?? '') === String(cropId)); }
-      function cropMetrics(crop) {
-        const c = records.columns;
-        const fertilizerRows = rowsFor(c.fertilizerCropId, crop.id);
-        const machineryRows = rowsFor(c.machineryCropId, crop.id);
-        const residueRows = rowsFor(c.residueCropId, crop.id);
-        const production = rowsFor(c.productionCropId, crop.id).reduce((sum, row) => sum + number(row[c.production]), 0);
-        const totals = {
-          fertilizer: fertilizerRows.reduce((sum, row) => sum + number(row[c.fertilizerEmission]), 0),
-          machinery: machineryRows.reduce((sum, row) => sum + number(row[c.machineryEmission]), 0),
-          burning: residueRows.reduce((sum, row) => sum + number(row[c.residueEmission]), 0)
-        };
-        const perTon = value => production > 0 ? value / production : 0;
-        return { production, fertilizer: perTon(totals.fertilizer), machinery: perTon(totals.machinery), burning: perTon(totals.burning), raw: { fertilizerRows, machineryRows, residueRows } };
-      }
-      function updateChart(values) {
-        if (chart) chart.destroy();
-        chart = new Chart($('breakdownChart'), { type:'doughnut', data:{ labels:['ปุ๋ย','เครื่องจักรและเชื้อเพลิง','การจัดการซากพืช'], datasets:[{ data:values, backgroundColor:['#0f8a62','#3b82a0','#ef8c5f'], borderWidth:0, hoverOffset:9 }] }, options:{ cutout:'68%', plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: context => context.label + ': ' + show(context.raw) + ' kg CO2e/ตัน' } } } } });
-      }
-      function renderTable(metrics) {
-        const c = records.columns, body = $('tableBody'); body.replaceChildren();
-        const groups = [
-          ['ปุ๋ย', metrics.raw.fertilizerRows, row => row[c.fertilizerId] || 'ปุ๋ย', row => (row[c.fertilizerAmount] || '0') + ' กก.', row => number(row[c.fertilizerEmission])],
-          ['เครื่องจักร', metrics.raw.machineryRows, row => row[c.machineryType] || 'เครื่องจักร', row => row[c.machineryFuel] || '—', row => number(row[c.machineryEmission])],
-          ['การเผาซากพืช', metrics.raw.residueRows, row => row[c.residueType] || 'การจัดการซากพืช', row => '—', row => number(row[c.residueEmission])]
-        ];
-        groups.forEach(([source, rows, label, activity, emission]) => rows.slice(0, 18).forEach(row => { const tr = document.createElement('tr'); [source,label(row),activity(row),show(emission(row))].forEach(value => { const td = document.createElement('td'); td.textContent = value; tr.appendChild(td); }); body.appendChild(tr); }));
-        if (!body.children.length) { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 4; td.textContent = 'ไม่พบรายการกิจกรรมสำหรับพืชนี้'; tr.appendChild(td); body.appendChild(tr); }
-      }
-      function renderFlow(metrics) {
-        const values = [metrics.fertilizer, metrics.machinery, metrics.burning], total = values.reduce((sum, value) => sum + value, 0);
-        const stages = [
-          ['🌱','การใช้ปุ๋ย',values[0],'ปริมาณปุ๋ยที่ใช้และค่า emission ในรายการเพาะปลูก'], ['🚜','เครื่องจักรและเชื้อเพลิง',values[1],'อัตราการใช้เครื่องจักรและพลังงานที่บันทึกใน Dataset รวม'], ['🔥','การจัดการซากพืช',values[2],'ผลกระทบจากการจัดการซากพืชและการเผาในที่โล่ง'], ['◎','ผลผลิตรวมและคาร์บอนสุทธิ',total,'ผลรวมการปล่อยจากทุกขั้นตอนต่อ 1 ตันผลผลิต']
-        ];
-        const flow = $('flow'); flow.replaceChildren();
-        stages.forEach(([icon,label,value,detail], index) => { const button = document.createElement('button'); button.className = 'flow-node'; button.type = 'button'; button.setAttribute('aria-pressed', index === 3 ? 'true' : 'false'); button.innerHTML = '<span class="flow-icon">' + icon + '</span><div class="flow-label">' + label + '</div><div class="flow-value">' + show(value) + '</div><div class="flow-unit">kg CO2e / ตัน</div>'; button.addEventListener('click', () => { [...flow.children].forEach(node => node.setAttribute('aria-pressed', 'false')); button.setAttribute('aria-pressed', 'true'); $('flowDetail').textContent = label + ': ' + detail; }); flow.appendChild(button); });
-        $('flowDetail').textContent = stages[3][1] + ': ' + stages[3][3];
-        return { values, total };
-      }
-      function renderCrop(crop) {
-        const metrics = cropMetrics(crop), result = renderFlow(metrics), sources = [['ปุ๋ย',result.values[0],'#0f8a62'],['เครื่องจักรและเชื้อเพลิง',result.values[1],'#3b82a0'],['การจัดการซากพืช',result.values[2],'#ef8c5f']];
-        $('totalKpi').textContent = show(result.total);
-        const highest = sources.reduce((max, item) => item[1] > max[1] ? item : max, sources[0]);
-        $('highestKpi').textContent = highest[0]; $('highestDetail').textContent = show(highest[1]) + ' kg CO2e / ตัน';
-        const legend = $('legend'); legend.replaceChildren(); sources.forEach(([name,value,color]) => { const row = document.createElement('div'); row.className = 'legend-row'; row.innerHTML = '<span class="legend-key"><span class="dot" style="background:' + color + '"></span>' + name + '</span><strong>' + show(value) + '</strong>'; legend.appendChild(row); });
-        updateChart(result.values); renderTable(metrics);
-        $('status').textContent = 'กำลังแสดงข้อมูล: ' + crop.name + ' (' + crop.type + ') · ผลผลิตที่ใช้ในการคำนวณ ' + show(metrics.production) + ' ตัน';
-      }
-      function initialise(data) {
-        const headers = data[0].map(value => String(value ?? '').trim()), rows = data.slice(1); records = { columns:columnMap(headers), rows };
-        const c = records.columns, crops = rows.filter(row => row[c.cropId] && row[c.cropName]).map(row => ({ id:row[c.cropId], name:row[c.cropName], type:row[c.cropType] || 'พืชเศรษฐกิจ' }));
-        const select = $('cropSelect'); select.replaceChildren(); crops.forEach(crop => { const option = document.createElement('option'); option.value = crop.id; option.textContent = crop.name + ' · ' + crop.type; select.appendChild(option); });
-        if (!crops.length) throw new Error('ไม่พบรายการพืชใน Dataset รวม.csv');
-        const change = () => renderCrop(crops.find(crop => crop.id === select.value)); select.addEventListener('change', change); change();
-      }
+
       function parseData(text) {
         Papa.parse(text.replace(/^\uFEFF/, ''), {
+          header: true,
           skipEmptyLines: 'greedy',
           complete: result => {
-            if (result.errors.length) { showLoadError(new Error('รูปแบบ CSV ไม่ถูกต้อง')); return; }
-            try { initialise(result.data); $('dataFallback').hidden = true; }
-            catch (error) { showLoadError(error); }
+            if (result.errors.length || !result.data.length) {
+              showLoadError(new Error('รูปแบบไฟล์ CSV ไม่ถูกต้องหรือไม่มีข้อมูล'));
+              return;
+            }
+            try {
+              initialise(result.data, result.meta.fields || Object.keys(result.data[0]));
+              $('dataFallback').hidden = true;
+            } catch (error) {
+              showLoadError(error);
+            }
           }
         });
       }
+
+      function initialise(rows, headers) {
+        const c = columnMap(headers);
+        
+        // กรองหาพืชที่มีชื่อและรหัส
+        const cropsMap = new Map();
+        rows.forEach(row => {
+          const id = row[headers[c.cropId]] || row['cultivation_id'];
+          const name = row[headers[c.cropName]] || row['crop_name'] || 'พืชเศรษฐกิจ';
+          const type = row[headers[c.cropType]] || row['crop_type'] || 'ทั่วไป';
+          if (id && !cropsMap.has(id)) {
+            cropsMap.set(id, { id, name, type });
+          }
+        });
+
+        const crops = Array.from(cropsMap.values());
+        if (!crops.length) throw new Error('ไม่พบคอลัมน์ข้อมูลพืชใน CSV');
+
+        const select = $('cropSelect');
+        select.replaceChildren();
+        crops.forEach(crop => {
+          const option = document.createElement('option');
+          option.value = crop.id;
+          option.textContent = `${crop.name} (${crop.type})`;
+          select.appendChild(option);
+        });
+
+        const renderSelected = () => {
+          const selectedCrop = crops.find(cp => cp.id === select.value) || crops[0];
+          renderCrop(selectedCrop, rows, headers, c);
+        };
+
+        select.addEventListener('change', renderSelected);
+        renderSelected();
+      }
+
+      function renderCrop(crop, rows, headers, c) {
+        const cropRows = rows.filter(r => (r['cultivation_id'] || r[headers[c.cropId]]) === crop.id);
+        
+        let fertilizerTotal = 0;
+        let machineryTotal = 0;
+        let residueTotal = 0;
+        let productionTotal = 0;
+
+        cropRows.forEach(r => {
+          // ดึงค่าตามชื่อคอลัมน์จริงที่มีความยืดหยุ่น
+          const getVal = (keys) => {
+            for (let k of keys) {
+              for (let col of headers) {
+                if (col.toLowerCase().includes(k.toLowerCase()) && r[col] !== undefined) {
+                  return number(r[col]);
+                }
+              }
+            }
+            return 0;
+          };
+
+          fertilizerTotal += getVal(['kgco₂e', 'fertilizer']);
+          machineryTotal += getVal(['carbon_per_hour', 'machinery']);
+          residueTotal += getVal(['source_carbon', 'residue']);
+          productionTotal += getVal(['total_production', 'production']);
+        });
+
+        const perTon = val => productionTotal > 0 ? val / productionTotal : val;
+        const fTon = perTon(fertilizerTotal);
+        const mTon = perTon(machineryTotal);
+        const bTon = perTon(residueTotal);
+        const totalTon = fTon + mTon + bTon;
+
+        $('totalKpi').textContent = show(totalTon);
+
+        const sources = [
+          ['การใช้ปุ๋ย', fTon, '#10b981'],
+          ['เครื่องจักรและเชื้อเพลิง', mTon, '#0284c7'],
+          ['การจัดการซากพืช', bTon, '#f97316']
+        ];
+        
+        const highest = sources.reduce((max, item) => item[1] > max[1] ? item : max, sources[0]);
+        $('highestKpi').textContent = highest[0];
+        $('highestDetail').textContent = show(highest[1]) + ' kg CO₂e / ตัน';
+
+        // Render Legend
+        const legend = $('legend');
+        legend.replaceChildren();
+        sources.forEach(([name, val, color]) => {
+          const row = document.createElement('div');
+          row.className = 'legend-row';
+          row.innerHTML = `<span class="legend-key"><span class="dot" style="background:${color}"></span>${name}</span><strong>${show(val)} kg CO₂e</strong>`;
+          legend.appendChild(row);
+        });
+
+        updateChart([fTon, mTon, bTon]);
+        renderFlow([fTon, mTon, bTon], totalTon);
+        renderTable(cropRows, headers);
+
+        $('status').textContent = `แสดงข้อมูล: ${crop.name} (${crop.type}) · ผลผลิตรวม ${show(productionTotal)} ตัน`;
+      }
+
+      function updateChart(values) {
+        if (chart) chart.destroy();
+        chart = new Chart($('breakdownChart'), { 
+          type: 'doughnut', 
+          data: { 
+            labels: ['การใช้ปุ๋ย', 'เครื่องจักรและเชื้อเพลิง', 'การจัดการซากพืช'], 
+            datasets: [{ 
+              data: values, 
+              backgroundColor: ['#10b981', '#0284c7', '#f97316'], 
+              borderWidth: 2, 
+              borderColor: '#ffffff',
+              hoverOffset: 6 
+            }] 
+          }, 
+          options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%', 
+            plugins: { 
+              legend: { display: false }, 
+              tooltip: { callbacks: { label: context => ` ${context.label}: ${show(context.raw)} kg CO₂e/ตัน` } } 
+            } 
+          } 
+        });
+      }
+
+      function renderFlow(values, total) {
+        const stages = [
+          ['🌱','การใช้ปุ๋ย', values[0], 'คำนวณจากปริมาณและชนิดปุ๋ยที่ใช้ในแปลงเพาะปลูก'], 
+          ['🚜','เครื่องจักรและพลังงาน', values[1], 'คำนวณจากอัตราการใช้เครื่องจักรและเชื้อเพลิงในแปลง'], 
+          ['🔥','การจัดการซากพืช', values[2], 'ประเมินการปล่อยก๊าซจากการจัดการและเผาวัสดุเหลือใช้'], 
+          ['◎','รวมคาร์บอนสุทธิ', total, 'ปริมาณการปล่อยก๊าซเรือนกระจกสุทธิรวมต่อ 1 ตันผลผลิต (Cradle-to-Gate)']
+        ];
+        const flow = $('flow'); 
+        flow.replaceChildren();
+        stages.forEach(([icon, label, value, detail], index) => { 
+          const button = document.createElement('button'); 
+          button.className = 'flow-node'; 
+          button.type = 'button'; 
+          button.setAttribute('aria-pressed', index === 3 ? 'true' : 'false'); 
+          button.innerHTML = `<span class="flow-icon">${icon}</span><div class="flow-label">${label}</div><div class="flow-value">${show(value)}</div><div class="flow-unit">kg CO₂e / ตัน</div>`; 
+          button.addEventListener('click', () => { 
+            [...flow.children].forEach(node => node.setAttribute('aria-pressed', 'false')); 
+            button.setAttribute('aria-pressed', 'true'); 
+            $('flowDetail').textContent = `${label} ➔ ${detail}`; 
+          }); 
+          flow.appendChild(button); 
+        });
+        $('flowDetail').textContent = `${stages[3][1]} ➔ ${stages[3][3]}`;
+      }
+
+      function renderTable(rows, headers) {
+        const body = $('tableBody'); 
+        body.replaceChildren();
+        rows.slice(0, 15).forEach(row => {
+          const tr = document.createElement('tr');
+          const td1 = document.createElement('td'); td1.textContent = row['crop_type'] || 'กิจกรรมแปลง';
+          const td2 = document.createElement('td'); td2.textContent = row['crop_name'] || row['fertilizer_id'] || 'รายการ';
+          const td3 = document.createElement('td'); td3.textContent = row['residue_type'] || row['oil_type_from_image'] || '—';
+          const td4 = document.createElement('td'); td4.textContent = show(row['kgCO₂e'] || row['source_carbon_kgCO2e'] || 0);
+          tr.append(td1, td2, td3, td4);
+          body.appendChild(tr);
+        });
+        if (!body.children.length) { 
+          const tr = document.createElement('tr'), td = document.createElement('td'); 
+          td.colSpan = 4; td.textContent = 'ไม่พบรายการกิจกรรมสำหรับพืชนี้'; 
+          tr.appendChild(td); body.appendChild(tr); 
+        }
+      }
+
       function showLoadError(error) {
         $('status').className = 'status error';
-        $('status').textContent = 'ไม่สามารถโหลดข้อมูลอัตโนมัติได้: ' + error.message;
+        $('status').textContent = 'แจ้งเตือน: ' + error.message + ' — กรุณาอัปโหลดไฟล์ CSV สำรองด้านล่าง';
         $('dataFallback').hidden = false;
       }
-      $('toggleTable').addEventListener('click', event => { const wrap = $('tableWrap'), visible = wrap.classList.toggle('show'); event.currentTarget.textContent = visible ? 'ซ่อนตารางข้อมูล' : 'แสดงตารางข้อมูล'; event.currentTarget.setAttribute('aria-expanded', String(visible)); });
-      $('csvUpload').addEventListener('change', event => { const file = event.target.files[0]; if (file) file.text().then(parseData).catch(showLoadError); });
-      fetch(DATA_URL, { cache:'no-store' }).then(response => { if (!response.ok) throw new Error('ไม่สามารถเปิดไฟล์ข้อมูลได้'); return response.text(); }).then(parseData).catch(showLoadError);
+
+      $('toggleTable').addEventListener('click', event => { 
+        const wrap = $('tableWrap'), visible = wrap.classList.toggle('show'); 
+        event.currentTarget.textContent = visible ? 'ซ่อนตารางข้อมูล' : 'แสดงตารางข้อมูล'; 
+        event.currentTarget.setAttribute('aria-expanded', String(visible)); 
+      });
+
+      $('csvUpload').addEventListener('change', event => { 
+        const file = event.target.files[0]; 
+        if (file) file.text().then(parseData).catch(showLoadError); 
+      });
+
+      fetch(DATA_URL, { cache: 'no-store' })
+        .then(response => { if (!response.ok) throw new Error('ไม่สามารถดึงไฟล์ข้อมูลได้'); return response.text(); })
+        .then(parseData)
+        .catch(showLoadError);
     })();
   </script>
 </body>
