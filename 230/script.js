@@ -11,7 +11,11 @@
     ['Fertilizer usage', 'fertilizer_amount'],
     ['Machinery usage', 'TYPE_MACHINERY'],
     ['Crop residue burning', 'residue_type'],
-    ['CO2 emissions', 'source_carbon_kgCO2e']
+    ['Fertilizer CO2 (kg CO2e)', 'fertilizer_co2_kgco2e'],
+    ['Machinery CO2 (kg CO2e)', 'machinery_co2_kgco2e'],
+    ['Residue burning CO2 (kg CO2e)', 'burning_co2_kgco2e'],
+    ['Total CO2 emissions (kg CO2e)', 'total_co2_kgco2e'],
+    ['CO2 emissions', 'total_co2_kgco2e']
   ];
 
   const state = {
@@ -35,7 +39,19 @@
     const s = String(v).replace(/,/g, '').trim();
     return s === '' ? NaN : Number(s);
   };
+  const valueOrZero = v => Number.isFinite(num(v)) ? num(v) : 0;
   const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  function combinedEmissionValues(row) {
+    const fertilizerAmount = num(row.fertilizer_amount);
+    const fertilizerFactor = num(row.EF_total);
+    const fertilizer = Number.isFinite(fertilizerAmount) && Number.isFinite(fertilizerFactor)
+      ? fertilizerAmount * fertilizerFactor
+      : valueOrZero(row.source_carbon_kgCO2e_per_rai);
+    const machinery = valueOrZero(row.carbon_per_hour_kgCO2e);
+    const burning = valueOrZero(row.source_carbon_kgCO2e);
+    return { fertilizer, machinery, burning, total: fertilizer + machinery + burning };
+  }
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -97,7 +113,14 @@
     let headers = (parsed.meta.fields || []).slice();
     if (!headers.length || !parsed.data.length) throw new Error('The file is empty or has no data rows.');
     if (file === COMBINED_DATASET) {
-      parsed.data.forEach(row => COMBINED_FIELDS.forEach(([label, source]) => { row[label] = row[source] ?? ''; }));
+      parsed.data.forEach(row => {
+        const emissions = combinedEmissionValues(row);
+        row.fertilizer_co2_kgco2e = emissions.fertilizer;
+        row.machinery_co2_kgco2e = emissions.machinery;
+        row.burning_co2_kgco2e = emissions.burning;
+        row.total_co2_kgco2e = emissions.total;
+        COMBINED_FIELDS.forEach(([label, source]) => { row[label] = row[source] ?? ''; });
+      });
       headers = [...COMBINED_FIELDS.map(([label]) => label), ...headers];
     }
     return { file, name: prettyName(file), headers, rows: parsed.data, hay: null };
@@ -413,9 +436,86 @@
     return value === null || !Number.isFinite(value) ? 'N/A' : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  function combinedDataset() {
+    return state.datasets.find(ds => ds.file === COMBINED_DATASET);
+  }
+
+  function calculatePitchSummary() {
+    const ds = combinedDataset();
+    if (!ds) return null;
+    const rows = state.view !== ALL && state.datasets[state.view] === ds
+      ? filterDataset(ds).map(i => ds.rows[i])
+      : ds.rows;
+    const totals = rows.reduce((sum, row) => {
+      sum.fertilizer += valueOrZero(row.fertilizer_co2_kgco2e);
+      sum.machinery += valueOrZero(row.machinery_co2_kgco2e);
+      sum.burning += valueOrZero(row.burning_co2_kgco2e);
+      return sum;
+    }, { fertilizer: 0, machinery: 0, burning: 0 });
+    totals.total = totals.fertilizer + totals.machinery + totals.burning;
+    totals.cropTypes = [...new Set(rows.map(row => row.crop_type).filter(Boolean))];
+    totals.rows = rows.length;
+    return totals;
+  }
+
   function CarbonSummaryCard() {
     const host = $('carbonSummary');
     host.replaceChildren();
+    const pitch = calculatePitchSummary();
+    if (pitch) {
+      const panel = el('div', 'overflow-hidden rounded-xl border border-sage bg-white shadow-sm');
+      const hero = el('div', 'bg-forest px-5 py-5 text-white sm:px-6');
+      const heading = el('div', 'flex flex-wrap items-start justify-between gap-3');
+      const title = el('div');
+      title.appendChild(el('div', 'text-xs font-semibold uppercase tracking-[0.18em] text-sage', 'Pitch dashboard · Dataset รวม'));
+      title.appendChild(el('h2', 'font-display mt-1 text-2xl font-bold sm:text-3xl', 'เส้นทางการปล่อยคาร์บอนของการเพาะปลูก'));
+      title.appendChild(el('p', 'mt-1 text-sm text-sage', pitch.cropTypes.length ? 'ประเภทพืช: ' + pitch.cropTypes.join(', ') : 'สรุปจากข้อมูลกิจกรรมที่มีอยู่'));
+      heading.appendChild(title);
+      const total = el('div', 'rounded-lg bg-white/10 px-4 py-3 text-right');
+      total.appendChild(el('div', 'text-xs font-semibold uppercase tracking-wide text-sage', 'Total CO2 emissions'));
+      total.appendChild(el('div', 'font-display mt-1 text-3xl font-bold', carbonValue(pitch.total)));
+      total.appendChild(el('div', 'text-xs text-sage', 'kg CO2e'));
+      heading.appendChild(total);
+      hero.appendChild(heading);
+      panel.appendChild(hero);
+
+      const body = el('div', 'p-4 sm:p-6');
+      body.appendChild(el('h3', 'font-display text-lg font-semibold text-forest', 'Emission workflow · คลิกแต่ละขั้นตอนเพื่อดูรายละเอียด'));
+      const flow = el('div', 'mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4');
+      const detail = el('div', 'mt-4 rounded-lg bg-mist px-4 py-3 text-sm text-forest', 'รวมการปล่อยจากทุกแหล่งข้อมูลใน Dataset รวม');
+      const stages = [
+        ['Fertilizer', 'ปุ๋ย', pitch.fertilizer, 'คำนวณจากปริมาณปุ๋ย × ค่า emission factor (หรือค่าปุ๋ยต่อไร่ที่มีในข้อมูล)'],
+        ['Machinery', 'เครื่องจักร', pitch.machinery, 'รวมค่า carbon ต่อชั่วโมงจากการใช้เครื่องจักร'],
+        ['Burning', 'การเผาเศษวัสดุ', pitch.burning, 'รวมการปล่อยจากการจัดการเศษวัสดุแบบเผาในที่โล่ง'],
+        ['Total', 'รวมการปล่อย', pitch.total, 'ผลรวม Fertilizer + Machinery + Burning']
+      ];
+      const buttons = [];
+      stages.forEach(([english, thai, value, description], index) => {
+        const step = el('button', (index === 3 ? 'bg-forest text-white border-forest ' : 'bg-white text-forest border-sage hover:border-fern hover:bg-mist ') + 'rounded-lg border p-4 text-left transition', '');
+        step.type = 'button';
+        step.setAttribute('aria-pressed', index === 3 ? 'true' : 'false');
+        step.appendChild(el('div', index === 3 ? 'text-xs font-semibold uppercase tracking-wide text-sage' : 'text-xs font-semibold uppercase tracking-wide text-leaf', (index + 1) + '. ' + english));
+        step.appendChild(el('div', 'mt-1 text-sm font-semibold', thai));
+        step.appendChild(el('div', 'font-display mt-2 text-2xl font-bold', carbonValue(value)));
+        step.appendChild(el('div', index === 3 ? 'text-xs text-sage' : 'text-xs text-stone-500', 'kg CO2e'));
+        step.addEventListener('click', () => {
+          buttons.forEach((button, buttonIndex) => {
+            const active = buttonIndex === index;
+            button.setAttribute('aria-pressed', String(active));
+            button.className = (active ? 'bg-leaf text-white border-leaf ' : 'bg-white text-forest border-sage hover:border-fern hover:bg-mist ') + 'rounded-lg border p-4 text-left transition';
+          });
+          detail.textContent = thai + ': ' + description;
+        });
+        buttons.push(step);
+        flow.appendChild(step);
+      });
+      body.appendChild(flow);
+      body.appendChild(detail);
+      body.appendChild(el('p', 'mt-4 text-xs text-stone-500', 'แสดงผลจาก ' + fmt(pitch.rows) + ' แถวใน Dataset รวม · หน่วยเป็น kg CO2e และคำนวณในเบราว์เซอร์โดยไม่แก้ไขไฟล์ต้นทาง'));
+      panel.appendChild(body);
+      host.appendChild(panel);
+      return;
+    }
     const data = calculateCarbonSummary();
     const selected = state.view === ALL ? 'All loaded crop datasets' : state.datasets[state.view].name;
     const panel = el('div', 'bg-white rounded-lg border border-sage p-4 sm:p-5');
