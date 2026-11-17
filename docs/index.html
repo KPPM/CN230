@@ -60,9 +60,6 @@
 
   <div id="app" class="hidden space-y-5">
 
-    <!-- Additive scope reference; kept separate from the existing data browser controls. -->
-    <section id="metadataBanner" aria-label="Dataset metadata and table guide"></section>
-
     <section class="bg-white rounded-lg border border-sage p-4 space-y-4">
       <div class="grid gap-3 md:grid-cols-12">
         <div class="md:col-span-5">
@@ -102,9 +99,6 @@
         <p id="filterHint" class="hidden text-sm text-stone-500 mt-2">Column filters work on a single dataset. Pick one from the Dataset list, or click a result count below to open it.</p>
       </div>
     </section>
-
-    <!-- Additive, read-only analysis of the CSVs currently loaded in the browser. -->
-    <section id="carbonSummary" aria-live="polite" aria-label="Carbon footprint summary"></section>
 
     <section id="cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></section>
 
