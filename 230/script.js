@@ -5,6 +5,14 @@
   const MANIFEST = DATA_DIR + 'manifest.json';
   const CONCURRENCY = 4;
   const ALL = 'ALL';
+  const COMBINED_DATASET = 'Dataset รวม.csv';
+  const COMBINED_FIELDS = [
+    ['Crop type', 'crop_type'],
+    ['Fertilizer usage', 'fertilizer_amount'],
+    ['Machinery usage', 'TYPE_MACHINERY'],
+    ['Crop residue burning', 'residue_type'],
+    ['CO2 emissions', 'source_carbon_kgCO2e']
+  ];
 
   const state = {
     datasets: [],
@@ -86,8 +94,12 @@
       skipEmptyLines: 'greedy',
       transformHeader: (h, i) => (h || '').trim() || '(column ' + (i + 1) + ')'
     });
-    const headers = (parsed.meta.fields || []).slice();
+    let headers = (parsed.meta.fields || []).slice();
     if (!headers.length || !parsed.data.length) throw new Error('The file is empty or has no data rows.');
+    if (file === COMBINED_DATASET) {
+      parsed.data.forEach(row => COMBINED_FIELDS.forEach(([label, source]) => { row[label] = row[source] ?? ''; }));
+      headers = [...COMBINED_FIELDS.map(([label]) => label), ...headers];
+    }
     return { file, name: prettyName(file), headers, rows: parsed.data, hay: null };
   }
 
