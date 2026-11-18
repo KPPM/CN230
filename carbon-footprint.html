@@ -116,7 +116,7 @@
     .lead { margin: 6px 0 0; color: var(--slate); font-size: 0.95rem; }
 
     /* Flow / Workflow Steps */
-    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: center; margin-top: 24px; } 
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: center; margin-top: 24px; }
     .flow-node { 
       position: relative; 
       min-height: 200px; 
@@ -238,7 +238,7 @@
       <article class="card kpi">
         <div class="kpi-label">คาร์บอนฟุตพริ้นท์รวมสุทธิ</div>
         <div class="kpi-value" id="totalKpi">0.00</div>
-        <div class="kpi-unit">kg CO₂e / ตันผลผลิต</div>
+        <div class="kpi-unit">ผลรวมตามหน่วยของคอลัมน์ต้นทาง</div>
       </article>
       <article class="card kpi">
         <div class="kpi-label">แหล่งปล่อยคาร์บอนสูงสุด</div>
@@ -270,7 +270,7 @@
       <article class="card section" aria-labelledby="summary-title">
         <h2 id="summary-title">สรุปข้อมูลเชิงลึกสำหรับ Pitching</h2>
         <div id="legend" class="legend"></div>
-        <p class="method"><strong>ระเบียบวิธีคำนวณ:</strong> นำข้อมูลการปล่อยก๊าซจากกิจกรรมการใช้ปุ๋ย เครื่องจักร และการจัดการซากพืชอ้างอิงจากชุดข้อมูล <code>LCI_SUMMARY_202611180025.csv</code> นำมารวมและหารด้วยผลผลิตรวมของพืชแต่ละชนิด (ค่าที่แสดงผลเป็นมาตรฐาน kg CO₂e ต่อ 1 ตันผลผลิต)</p>
+        <p class="method"><strong>ระเบียบวิธีคำนวณ:</strong> จัดกลุ่มตามชนิดพืชจาก <code>LCI_SUMMARY_202611180025.csv</code> แล้วใช้ค่าเฉลี่ยของคาร์บอนจากปุ๋ยและการจัดการซากพืช ร่วมกับอัตราคาร์บอนเครื่องจักรโดยตรง เพื่อคำนวณรวมคาร์บอนสุทธิ</p>
       </article>
     </section>
 
@@ -429,6 +429,27 @@
         return seen ? total : null;
       };
 
+      const averageOf = (rows, col) => {
+        if (!col) return 0;
+        const values = rows.map(row => parseNum(row[col])).filter(value => value !== null);
+        return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+      };
+
+      // Machinery is a crop-level rate in this source.  Take its direct value
+      // rather than aggregating the duplicate rate repeated on individual rows.
+      const directCropValue = (rows, col) => {
+        if (!col) return 0;
+        const value = rows.map(row => parseNum(row[col])).find(value => value !== null);
+        return value ?? 0;
+      };
+
+      function carbonSummaryForCrop(type, rows, c) {
+        const fertilizer = averageOf(rows, c.fertPerTon);
+        const machinery = directCropValue(rows, c.machRate);
+        const residue = averageOf(rows, c.residCarbon);
+        return { type, rows: rows.length, fertilizer, machinery, residue, total: fertilizer + machinery + residue };
+      }
+
       // ค่ารวมระดับชนิดพืช: ถ้าทุกแถวเป็นค่าเดียวกัน (ค่าระดับพืชที่ซ้ำในแต่ละแถว) ใช้ค่านั้น ไม่เช่นนั้นรวมทุกแถว
       const cropLevel = (rows, col) => {
         if (!col) return null;
@@ -473,28 +494,20 @@
       }
 
       function renderCrop(type, cropRows, c, missing) {
-        const fertilizerTotal = sumOf(cropRows, c.fertCarbon) ?? 0;
-        const residueTotal = sumOf(cropRows, c.residCarbon) ?? 0;
-        const machineryTotal = cropLevel(cropRows, c.machRate) ?? 0;
-        const productionTotal = sumOf(cropRows, c.production) ?? 0;
-
-        const perTon = val => productionTotal > 0 ? val / productionTotal : val;
-        const fTon = perTon(fertilizerTotal);
-        const mTon = perTon(machineryTotal);
-        const bTon = perTon(residueTotal);
-        const totalTon = fTon + mTon + bTon;
+        const summary = carbonSummaryForCrop(type, cropRows, c);
+        const { fertilizer: fTon, machinery: mTon, residue: bTon, total: totalTon } = summary;
 
         $('totalKpi').textContent = show(totalTon);
 
         const sources = [
-          ['การใช้ปุ๋ย', fTon, '#10b981'],
+          ['การใช้ปุ๋ย (ค่าเฉลี่ย)', fTon, '#10b981'],
           ['เครื่องจักรและเชื้อเพลิง', mTon, '#0284c7'],
-          ['การจัดการซากพืช', bTon, '#f97316']
+          ['การจัดการซากพืช (ค่าเฉลี่ย)', bTon, '#f97316']
         ];
 
         const highest = sources.reduce((max, item) => item[1] > max[1] ? item : max, sources[0]);
         $('highestKpi').textContent = highest[0];
-        $('highestDetail').textContent = show(highest[1]) + ' kg CO₂e / ตัน';
+        $('highestDetail').textContent = show(highest[1]) + ' kg CO₂e · ตามคอลัมน์ต้นทาง';
 
         // Render Legend
         const legend = $('legend');
@@ -510,7 +523,7 @@
         renderFlow([fTon, mTon, bTon], totalTon);
         renderTable(buildTableRows(cropRows, c));
 
-        let msg = `แสดงข้อมูล: ${type} · ผลผลิตรวม ${show(productionTotal)} ตัน`;
+        let msg = `แสดงข้อมูล: ${type} · ${summary.rows.toLocaleString('th-TH')} รายการ · ค่าเฉลี่ยต่อชนิดพืช`;
         if (missing.length) msg += ` · ไม่พบคอลัมน์: ${missing.join(', ')}`;
         $('status').textContent = msg;
       }
@@ -520,10 +533,10 @@
         chart = new Chart($('breakdownChart'), { 
           type: 'doughnut', 
           data: { 
-            labels: ['การใช้ปุ๋ย', 'เครื่องจักรและเชื้อเพลิง', 'การจัดการซากพืช'], 
+            labels: ['การใช้ปุ๋ย (ค่าเฉลี่ย)', 'เครื่องจักรและเชื้อเพลิง', 'การจัดการซากพืช (ค่าเฉลี่ย)'],
             datasets: [{ 
               data: values, 
-              backgroundColor: ['#10b981', '#0284c7', '#f97316'], 
+              backgroundColor: ['#10b981', '#0284c7', '#f97316'],
               borderWidth: 2, 
               borderColor: '#ffffff',
               hoverOffset: 6 
@@ -535,7 +548,7 @@
             cutout: '70%', 
             plugins: { 
               legend: { display: false }, 
-              tooltip: { callbacks: { label: context => ` ${context.label}: ${show(context.raw)} kg CO₂e/ตัน` } } 
+              tooltip: { callbacks: { label: context => ` ${context.label}: ${show(context.raw)} kg CO₂e · ตามคอลัมน์ต้นทาง` } }
             } 
           } 
         });
@@ -543,10 +556,10 @@
 
       function renderFlow(values, total) {
         const stages = [
-          ['🌱','การใช้ปุ๋ย', values[0], 'คำนวณจากปริมาณและชนิดปุ๋ยที่ใช้ในแปลงเพาะปลูก'], 
+          ['🌱','การใช้ปุ๋ย (ค่าเฉลี่ย)', values[0], 'ค่าเฉลี่ยจากคอลัมน์คาร์บอนจากปุ๋ย (kgCO₂e/ตันผลผลิต) ของชนิดพืชที่เลือก'],
           ['🚜','เครื่องจักรและพลังงาน', values[1], 'คำนวณจากอัตราการใช้เครื่องจักรและเชื้อเพลิงในแปลง'], 
-          ['🔥','การจัดการซากพืช', values[2], 'ประเมินการปล่อยก๊าซจากการจัดการและเผาวัสดุเหลือใช้'], 
-          ['◎','รวมคาร์บอนสุทธิ', total, 'ปริมาณการปล่อยก๊าซเรือนกระจกสุทธิรวมต่อ 1 ตันผลผลิต (Cradle-to-Gate)']
+          ['🔥','การจัดการซากพืช (ค่าเฉลี่ย)', values[2], 'ค่าเฉลี่ยจากคอลัมน์คาร์บอนจากการจัดการซากพืช (kgCO₂e) ของชนิดพืชที่เลือก'],
+          ['◎','รวมคาร์บอนสุทธิ', total, 'ผลรวม การใช้ปุ๋ย (ค่าเฉลี่ย) + เครื่องจักรและพลังงาน + การจัดการซากพืช (ค่าเฉลี่ย)']
         ];
         const flow = $('flow'); 
         flow.replaceChildren();
@@ -554,8 +567,8 @@
           const button = document.createElement('button'); 
           button.className = 'flow-node'; 
           button.type = 'button'; 
-          button.setAttribute('aria-pressed', index === 3 ? 'true' : 'false'); 
-          button.innerHTML = `<span class="flow-icon">${icon}</span><div class="flow-label">${label}</div><div class="flow-value">${show(value)}</div><div class="flow-unit">kg CO₂e / ตัน</div>`; 
+          button.setAttribute('aria-pressed', index === 3 ? 'true' : 'false');
+          button.innerHTML = `<span class="flow-icon">${icon}</span><div class="flow-label">${label}</div><div class="flow-value">${show(value)}</div><div class="flow-unit">kg CO₂e · ตามคอลัมน์ต้นทาง</div>`;
           button.addEventListener('click', () => { 
             [...flow.children].forEach(node => node.setAttribute('aria-pressed', 'false')); 
             button.setAttribute('aria-pressed', 'true'); 
