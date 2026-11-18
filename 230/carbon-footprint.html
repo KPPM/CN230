@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -204,6 +205,9 @@
     th, td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; text-align: left; } 
     th { position: sticky; top: 0; color: #065f46; background: var(--mint); font-weight: 600; } 
     td:last-child, th:last-child { text-align: right; font-variant-numeric: tabular-nums; } 
+    th, td { white-space: nowrap; } 
+    td:not(:first-child), th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; } 
+    td:first-child, th:first-child { text-align: left; } 
     
     .status { margin-top: 24px; color: var(--slate); font-size: 0.9rem; text-align: center; font-weight: 500; } 
     .error { color: var(--coral); } 
@@ -266,7 +270,7 @@
       <article class="card section" aria-labelledby="summary-title">
         <h2 id="summary-title">สรุปข้อมูลเชิงลึกสำหรับ Pitching</h2>
         <div id="legend" class="legend"></div>
-        <p class="method"><strong>ระเบียบวิธีคำนวณ:</strong> นำข้อมูลการปล่อยก๊าซจากกิจกรรมการใช้ปุ๋ย เครื่องจักร และการจัดการซากพืชอ้างอิงจากชุดข้อมูล <code>Dataset รวม.csv</code> นำมารวมและหารด้วยผลผลิตรวมของพืชแต่ละชนิด (ค่าที่แสดงผลเป็นมาตรฐาน kg CO₂e ต่อ 1 ตันผลผลิต)</p>
+        <p class="method"><strong>ระเบียบวิธีคำนวณ:</strong> นำข้อมูลการปล่อยก๊าซจากกิจกรรมการใช้ปุ๋ย เครื่องจักร และการจัดการซากพืชอ้างอิงจากชุดข้อมูล <code>LCI_SUMMARY_202611180025.csv</code> นำมารวมและหารด้วยผลผลิตรวมของพืชแต่ละชนิด (ค่าที่แสดงผลเป็นมาตรฐาน kg CO₂e ต่อ 1 ตันผลผลิต)</p>
       </article>
     </section>
 
@@ -278,10 +282,18 @@
         <table>
           <thead>
             <tr>
-              <th>แหล่งปล่อย</th>
-              <th>รายการ</th>
-              <th>กิจกรรม / เชื้อเพลิง</th>
-              <th>การปล่อย (kg CO₂e)</th>
+              <th>จังหวัด</th>
+              <th>ปีเพาะปลูก</th>
+              <th>พื้นที่เพาะปลูก (ไร่)</th>
+              <th>ปริมาณผลผลิต (ตัน)</th>
+              <th>ปุ๋ยที่ใช้ (kg)</th>
+              <th>คาร์บอนจากปุ๋ย (kgCO₂e)</th>
+              <th>คาร์บอนจากปุ๋ย (kgCO₂e/ไร่)</th>
+              <th>คาร์บอนจากปุ๋ย (kgCO₂e/ตันผลผลิต)</th>
+              <th>คาร์บอนจากการจัดการซากพืช (kgCO₂e)</th>
+              <th>คาร์บอนจากซากพืช (kgCO₂e/ตันผลผลิต)</th>
+              <th>อัตราใช้เชื้อเพลิงรวมตามชนิดพืช (L/h)</th>
+              <th>อัตราคาร์บอนเครื่องจักรรวมตามชนิดพืช (kgCO₂e/h)</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -289,36 +301,69 @@
       </div>
     </section>
 
-    <p id="status" class="status" aria-live="polite">กำลังเชื่อมต่อฐานข้อมูล Dataset รวม.csv…</p>
+    <p id="status" class="status" aria-live="polite">กำลังเชื่อมต่อฐานข้อมูล LCI_SUMMARY_202611180025.csv…</p>
     <div id="dataFallback" class="fallback" role="alert" hidden>
-      เบราว์เซอร์จำกัดการเข้าถึงไฟล์โดยตรงผ่าน <code>file://</code> กรุณารันผ่าน Local Server หรือเลือกไฟล์ <strong>Dataset รวม.csv</strong> ด้วยตนเอง:
-      <label for="csvUpload">อัปโหลดไฟล์ Dataset รวม.csv<input id="csvUpload" type="file" accept=".csv,text/csv"></label>
+      เบราว์เซอร์จำกัดการเข้าถึงไฟล์โดยตรงผ่าน <code>file://</code> กรุณารันผ่าน Local Server หรือเลือกไฟล์ <strong>LCI_SUMMARY_202611180025.csv</strong> ด้วยตนเอง:
+      <label for="csvUpload">อัปโหลดไฟล์ LCI_SUMMARY_202611180025.csv<input id="csvUpload" type="file" accept=".csv,text/csv"></label>
     </div>
   </main>
 
   <script>
     (() => {
       'use strict';
-      const DATA_FILE = 'Dataset รวม.csv';
+      const DATA_FILE = 'LCI_SUMMARY_202611180025.csv';
       const DATA_URL = 'data/' + encodeURIComponent(DATA_FILE);
       const $ = id => document.getElementById(id);
-      const number = value => { const parsed = Number(String(value ?? '').replace(/,/g, '').trim()); return Number.isFinite(parsed) ? parsed : 0; };
+      const parseNum = value => {
+        const text = String(value ?? '').replace(/,/g, '').trim();
+        if (text === '' || text === '-' || text === '—') return null;
+        const parsed = Number(text);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const number = value => parseNum(value) ?? 0;
       const show = value => number(value).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      
-      let records = null, chart = null;
+      const showCell = value => (value === null || value === undefined || !Number.isFinite(value)) ? '—' : show(value);
+
+      let chart = null;
+
+      // ชื่อคอลัมน์ในตาราง (ตรงตามที่กำหนด) และตัวช่วยจับคู่หัวตาราง CSV
+      const norm = s => String(s ?? '').toLowerCase().replace(/₂/g, '2').replace(/[\s_\-().\/\\]/g, '');
+      const has = (h, ...words) => words.some(w => h.includes(w));
+      const FIELDS = {
+        type:        { label: 'ชนิดพืช', exact: ['croptype', 'ชนิดพืช', 'ประเภทพืช'], test: h => has(h, 'croptype', 'ชนิดพืช', 'ประเภทพืช') && !has(h, 'kgco2e') },
+        province:    { label: 'จังหวัด', exact: ['จังหวัด', 'province'], test: h => has(h, 'จังหวัด', 'province') },
+        year:        { label: 'ปีเพาะปลูก', exact: ['ปีเพาะปลูก', 'year', 'cultivationyear'], test: h => has(h, 'ปีเพาะปลูก', 'year') },
+        area:        { label: 'พื้นที่เพาะปลูก (ไร่)', exact: ['พื้นที่เพาะปลูกไร่'], test: h => has(h, 'พื้นที่เพาะปลูก', 'area', 'rai') && !has(h, 'kgco2e') },
+        production:  { label: 'ปริมาณผลผลิต (ตัน)', exact: ['ปริมาณผลผลิตตัน'], test: h => has(h, 'ปริมาณผลผลิต', 'totalproduction', 'production') && !has(h, 'kgco2e') },
+        fertAmount:  { label: 'ปุ๋ยที่ใช้ (kg)', exact: ['ปุ๋ยที่ใช้kg'], test: h => has(h, 'ปุ๋ยที่ใช้', 'fertilizeramount') && !has(h, 'kgco2e') },
+        fertCarbon:  { label: 'คาร์บอนจากปุ๋ย (kgCO₂e)', exact: ['คาร์บอนจากปุ๋ยkgco2e'], test: h => has(h, 'ปุ๋ย', 'fertilizer') && has(h, 'kgco2e') && !has(h, 'ไร่', 'ตัน', 'perrai', 'perton') },
+        fertPerRai:  { label: 'คาร์บอนจากปุ๋ย (kgCO₂e/ไร่)', exact: ['คาร์บอนจากปุ๋ยkgco2eไร่'], test: h => has(h, 'ปุ๋ย', 'fertilizer') && has(h, 'kgco2e') && has(h, 'ไร่', 'perrai') },
+        fertPerTon:  { label: 'คาร์บอนจากปุ๋ย (kgCO₂e/ตันผลผลิต)', exact: ['คาร์บอนจากปุ๋ยkgco2eตันผลผลิต'], test: h => has(h, 'ปุ๋ย', 'fertilizer') && has(h, 'kgco2e') && has(h, 'ตัน', 'perton') },
+        residCarbon: { label: 'คาร์บอนจากการจัดการซากพืช (kgCO₂e)', exact: ['คาร์บอนจากการจัดการซากพืชkgco2e'], test: h => has(h, 'ซากพืช', 'residue', 'sourcecarbon') && has(h, 'kgco2e') && !has(h, 'ตัน', 'perton') },
+        residPerTon: { label: 'คาร์บอนจากซากพืช (kgCO₂e/ตันผลผลิต)', exact: ['คาร์บอนจากซากพืชkgco2eตันผลผลิต'], test: h => has(h, 'ซากพืช', 'residue') && has(h, 'kgco2e') && has(h, 'ตัน', 'perton') },
+        fuelRate:    { label: 'อัตราใช้เชื้อเพลิงรวมตามชนิดพืช (L/h)', exact: ['อัตราใช้เชื้อเพลิงรวมตามชนิดพืชlh'], test: h => has(h, 'เชื้อเพลิง', 'fuel') && !has(h, 'kgco2e') },
+        machRate:    { label: 'อัตราคาร์บอนเครื่องจักรรวมตามชนิดพืช (kgCO₂e/h)', exact: ['อัตราคาร์บอนเครื่องจักรรวมตามชนิดพืชkgco2eh'], test: h => (has(h, 'เครื่องจักร', 'machinery') && has(h, 'kgco2e')) || has(h, 'carbonperhour') }
+      };
 
       function columnMap(headers) {
-        const find = (names) => headers.findIndex(h => names.some(n => h.toLowerCase().includes(n.toLowerCase())));
-        return {
-          cropId: find(['cultivation_id']),
-          cropName: find(['crop_name']),
-          cropType: find(['crop_type']),
-          fertilizerAmount: find(['fertilizer_amount']),
-          fertilizerEmission: find(['kgco₂e', 'carbon']),
-          machineryEmission: find(['carbon_per_hour', 'machinery_carbon']),
-          residueEmission: find(['source_carbon', 'residue_carbon']),
-          production: find(['total_production', 'production'])
-        };
+        const normalized = headers.map(norm);
+        const used = new Set();
+        const map = {};
+        const claim = (key, idx) => { if (idx >= 0 && !used.has(idx)) { map[key] = headers[idx]; used.add(idx); return true; } return false; };
+        // รอบแรก: ชื่อตรงตัว
+        Object.entries(FIELDS).forEach(([key, f]) => {
+          claim(key, normalized.findIndex((h, i) => !used.has(i) && f.exact.includes(h)));
+        });
+        // รอบสอง: จับคู่แบบยืดหยุ่น
+        Object.entries(FIELDS).forEach(([key, f]) => {
+          if (map[key]) return;
+          claim(key, normalized.findIndex((h, i) => !used.has(i) && f.test(h)));
+        });
+        // ถ้าไม่มีคอลัมน์ชนิดพืช ให้ใช้ชื่อพืชแทน
+        if (!map.type) {
+          claim('type', normalized.findIndex((h, i) => !used.has(i) && ['cropname', 'ชื่อพืช', 'พืช'].includes(h)));
+        }
+        return map;
       }
 
       function parseData(text) {
@@ -326,12 +371,12 @@
           header: true,
           skipEmptyLines: 'greedy',
           complete: result => {
-            if (result.errors.length || !result.data.length) {
+            if (!result.data.length) {
               showLoadError(new Error('รูปแบบไฟล์ CSV ไม่ถูกต้องหรือไม่มีข้อมูล'));
               return;
             }
             try {
-              initialise(result.data, result.meta.fields || Object.keys(result.data[0]));
+              initialise(result.data, (result.meta.fields || Object.keys(result.data[0])).map(h => String(h).trim()), result.meta.fields);
               $('dataFallback').hidden = true;
             } catch (error) {
               showLoadError(error);
@@ -340,67 +385,98 @@
         });
       }
 
-      function initialise(rows, headers) {
+      function initialise(rawRows, headers, rawFields) {
+        // ตัดช่องว่างหัวตารางให้ตรงกับชื่อคอลัมน์ใน rows
+        const rows = rawFields && rawFields.some((f, i) => f !== headers[i])
+          ? rawRows.map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [String(k).trim(), v])))
+          : rawRows;
         const c = columnMap(headers);
-        
-        // กรองหาพืชที่มีชื่อและรหัส
-        const cropsMap = new Map();
+        if (!c.type) throw new Error('ไม่พบคอลัมน์ชนิดพืชใน CSV (หัวตารางที่พบ: ' + headers.join(', ') + ')');
+
+        // จัดกลุ่มตามชนิดพืช
+        const groups = new Map();
         rows.forEach(row => {
-          const id = row[headers[c.cropId]] || row['cultivation_id'];
-          const name = row[headers[c.cropName]] || row['crop_name'] || 'พืชเศรษฐกิจ';
-          const type = row[headers[c.cropType]] || row['crop_type'] || 'ทั่วไป';
-          if (id && !cropsMap.has(id)) {
-            cropsMap.set(id, { id, name, type });
-          }
+          const type = String(row[c.type] ?? '').trim();
+          if (!type) return;
+          if (!groups.has(type)) groups.set(type, []);
+          groups.get(type).push(row);
         });
+        const types = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'th'));
+        if (!types.length) throw new Error('ไม่พบข้อมูลชนิดพืชใน CSV');
 
-        const crops = Array.from(cropsMap.values());
-        if (!crops.length) throw new Error('ไม่พบคอลัมน์ข้อมูลพืชใน CSV');
-
+        const missing = Object.entries(FIELDS).filter(([k]) => k !== 'type' && !c[k]).map(([, f]) => f.label);
         const select = $('cropSelect');
         select.replaceChildren();
-        crops.forEach(crop => {
+        types.forEach(type => {
           const option = document.createElement('option');
-          option.value = crop.id;
-          option.textContent = `${crop.name} (${crop.type})`;
+          option.value = type;
+          option.textContent = type;
           select.appendChild(option);
         });
 
         const renderSelected = () => {
-          const selectedCrop = crops.find(cp => cp.id === select.value) || crops[0];
-          renderCrop(selectedCrop, rows, headers, c);
+          const type = types.includes(select.value) ? select.value : types[0];
+          renderCrop(type, groups.get(type), c, missing);
         };
-
         select.addEventListener('change', renderSelected);
         renderSelected();
       }
 
-      function renderCrop(crop, rows, headers, c) {
-        const cropRows = rows.filter(r => (r['cultivation_id'] || r[headers[c.cropId]]) === crop.id);
-        
-        let fertilizerTotal = 0;
-        let machineryTotal = 0;
-        let residueTotal = 0;
-        let productionTotal = 0;
+      const sumOf = (rows, col) => {
+        if (!col) return null;
+        let total = 0, seen = false;
+        rows.forEach(r => { const v = parseNum(r[col]); if (v !== null) { total += v; seen = true; } });
+        return seen ? total : null;
+      };
 
+      // ค่ารวมระดับชนิดพืช: ถ้าทุกแถวเป็นค่าเดียวกัน (ค่าระดับพืชที่ซ้ำในแต่ละแถว) ใช้ค่านั้น ไม่เช่นนั้นรวมทุกแถว
+      const cropLevel = (rows, col) => {
+        if (!col) return null;
+        const vals = rows.map(r => parseNum(r[col])).filter(v => v !== null);
+        if (!vals.length) return null;
+        return new Set(vals).size === 1 ? vals[0] : vals.reduce((a, b) => a + b, 0);
+      };
+
+      const ratio = (num, den) => (num !== null && den !== null && den > 0) ? num / den : null;
+
+      function buildTableRows(cropRows, c) {
+        // รวมตามจังหวัด + ปีเพาะปลูก ภายในชนิดพืชเดียวกัน
+        const buckets = new Map();
         cropRows.forEach(r => {
-          // ดึงค่าตามชื่อคอลัมน์จริงที่มีความยืดหยุ่น
-          const getVal = (keys) => {
-            for (let k of keys) {
-              for (let col of headers) {
-                if (col.toLowerCase().includes(k.toLowerCase()) && r[col] !== undefined) {
-                  return number(r[col]);
-                }
-              }
-            }
-            return 0;
-          };
-
-          fertilizerTotal += getVal(['kgco₂e', 'fertilizer']);
-          machineryTotal += getVal(['carbon_per_hour', 'machinery']);
-          residueTotal += getVal(['source_carbon', 'residue']);
-          productionTotal += getVal(['total_production', 'production']);
+          const province = c.province ? String(r[c.province] ?? '').trim() : '';
+          const year = c.year ? String(r[c.year] ?? '').trim() : '';
+          const key = province + '\u0000' + year;
+          if (!buckets.has(key)) buckets.set(key, { province, year, rows: [] });
+          buckets.get(key).rows.push(r);
         });
+        const fuel = cropLevel(cropRows, c.fuelRate);
+        const mach = cropLevel(cropRows, c.machRate);
+        return Array.from(buckets.values())
+          .sort((a, b) => a.province.localeCompare(b.province, 'th') || a.year.localeCompare(b.year))
+          .map(({ province, year, rows }) => {
+            const area = sumOf(rows, c.area);
+            const prod = sumOf(rows, c.production);
+            const fertAmt = sumOf(rows, c.fertAmount);
+            const fertC = sumOf(rows, c.fertCarbon);
+            const residC = sumOf(rows, c.residCarbon);
+            // คำนวณอัตราจากผลรวมเสมอ เพื่อให้ถูกต้องเมื่อมีหลายแถวต่อจังหวัด-ปี; ถ้าคำนวณไม่ได้ใช้ค่าในไฟล์
+            const fileVal = col => (rows.length === 1 && col) ? parseNum(rows[0][col]) : null;
+            return {
+              province, year, area, prod, fertAmt, fertC,
+              fertPerRai: ratio(fertC, area) ?? fileVal(c.fertPerRai),
+              fertPerTon: ratio(fertC, prod) ?? fileVal(c.fertPerTon),
+              residC,
+              residPerTon: ratio(residC, prod) ?? fileVal(c.residPerTon),
+              fuel, mach
+            };
+          });
+      }
+
+      function renderCrop(type, cropRows, c, missing) {
+        const fertilizerTotal = sumOf(cropRows, c.fertCarbon) ?? 0;
+        const residueTotal = sumOf(cropRows, c.residCarbon) ?? 0;
+        const machineryTotal = cropLevel(cropRows, c.machRate) ?? 0;
+        const productionTotal = sumOf(cropRows, c.production) ?? 0;
 
         const perTon = val => productionTotal > 0 ? val / productionTotal : val;
         const fTon = perTon(fertilizerTotal);
@@ -415,7 +491,7 @@
           ['เครื่องจักรและเชื้อเพลิง', mTon, '#0284c7'],
           ['การจัดการซากพืช', bTon, '#f97316']
         ];
-        
+
         const highest = sources.reduce((max, item) => item[1] > max[1] ? item : max, sources[0]);
         $('highestKpi').textContent = highest[0];
         $('highestDetail').textContent = show(highest[1]) + ' kg CO₂e / ตัน';
@@ -432,9 +508,11 @@
 
         updateChart([fTon, mTon, bTon]);
         renderFlow([fTon, mTon, bTon], totalTon);
-        renderTable(cropRows, headers);
+        renderTable(buildTableRows(cropRows, c));
 
-        $('status').textContent = `แสดงข้อมูล: ${crop.name} (${crop.type}) · ผลผลิตรวม ${show(productionTotal)} ตัน`;
+        let msg = `แสดงข้อมูล: ${type} · ผลผลิตรวม ${show(productionTotal)} ตัน`;
+        if (missing.length) msg += ` · ไม่พบคอลัมน์: ${missing.join(', ')}`;
+        $('status').textContent = msg;
       }
 
       function updateChart(values) {
@@ -488,21 +566,26 @@
         $('flowDetail').textContent = `${stages[3][1]} ➔ ${stages[3][3]}`;
       }
 
-      function renderTable(rows, headers) {
+      const COLS = 12;
+      function renderTable(items) {
         const body = $('tableBody'); 
         body.replaceChildren();
-        rows.slice(0, 15).forEach(row => {
+        items.forEach(it => {
           const tr = document.createElement('tr');
-          const td1 = document.createElement('td'); td1.textContent = row['crop_type'] || 'กิจกรรมแปลง';
-          const td2 = document.createElement('td'); td2.textContent = row['crop_name'] || row['fertilizer_id'] || 'รายการ';
-          const td3 = document.createElement('td'); td3.textContent = row['residue_type'] || row['oil_type_from_image'] || '—';
-          const td4 = document.createElement('td'); td4.textContent = show(row['kgCO₂e'] || row['source_carbon_kgCO2e'] || 0);
-          tr.append(td1, td2, td3, td4);
+          const cells = [
+            it.province || '—',
+            it.year || '—',
+            showCell(it.area), showCell(it.prod), showCell(it.fertAmt),
+            showCell(it.fertC), showCell(it.fertPerRai), showCell(it.fertPerTon),
+            showCell(it.residC), showCell(it.residPerTon),
+            showCell(it.fuel), showCell(it.mach)
+          ];
+          cells.forEach(text => { const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); });
           body.appendChild(tr);
         });
         if (!body.children.length) { 
           const tr = document.createElement('tr'), td = document.createElement('td'); 
-          td.colSpan = 4; td.textContent = 'ไม่พบรายการกิจกรรมสำหรับพืชนี้'; 
+          td.colSpan = COLS; td.textContent = 'ไม่พบรายการข้อมูลสำหรับพืชนี้'; 
           tr.appendChild(td); body.appendChild(tr); 
         }
       }
@@ -521,7 +604,7 @@
 
       $('csvUpload').addEventListener('change', event => { 
         const file = event.target.files[0]; 
-        if (file) file.text().then(parseData).catch(showLoadError); 
+        if (file) file.text().then(text => { $('status').className = 'status'; parseData(text); }).catch(showLoadError); 
       });
 
       fetch(DATA_URL, { cache: 'no-store' })
